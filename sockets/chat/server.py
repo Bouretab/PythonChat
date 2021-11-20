@@ -1,7 +1,14 @@
+#   Voici le chatroom n°1
+#   Ce chatroom envoie le message a tout le monde ce qui fait que l'envoyeur voit 2 fois son message
+
+
+
+
+
 import threading
 import socket
 
-host = '127.0.0.1' # localhost
+host = input('IP : ')
 port = 55555
 
 server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -9,7 +16,7 @@ server.bind((host, port))
 server.listen()
 
 clients = []
-nicknames = []
+usernames = []
 
 def broadcast(message):
     for client in clients:
@@ -20,33 +27,35 @@ def handle(client):
     while True:
         try:
             message = client.recv(1024)
+            print(message.decode('utf-8'))
             broadcast(message)
 
         except:
             index = clients.index(client)
             clients.remove(client)
             client.close()
-            nickname = nicknames[index]
-            broadcast(f"{nickname} left the chat".encode('ascii'))
-            nicknames.remove(nickname)
+            username = usernames[index]
+            print(f'{username} left the chat')
+            broadcast(f"{username} left the chat".encode('utf-8'))
+            usernames.remove(username)
             break
 
 def receive():
     while True:
         client, adress = server.accept()
-        print(f"Connected with {str(adress)}")
+        print(f"{str(adress)} is connected")
 
-        client.send('NICK'.encode('ascii'))
-        nickname = client.recv(1024).decode('ascii')
-        nicknames.append(nickname)
+        client.send('NICK'.encode('utf-8'))
+        username = client.recv(1024).decode('utf-8')
+        usernames.append(username)
         clients.append(client)
 
-        print(f'Nickname of the client is {nickname}')
-        broadcast(f'{nickname} joined the chat'.encode('ascii'))
-        client.send('Connected th the server'.encode('ascii'))
+        print(f'{username} joined the chat')
+        broadcast(f'{username} joined the chat'.encode('utf-8'))
+        client.send('Connected'.encode('utf-8'))
 
         thread = threading.Thread(target = handle, args = (client,))
         thread.start()
 
-print("Server is listening...")
+print("Server started")
 receive()
