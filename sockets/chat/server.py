@@ -1,26 +1,22 @@
-#   Voici le chatroom n°1
-#   Ce chatroom envoie le message a tout le monde ce qui fait que l'envoyeur voit 2 fois son message
-
-
-
-
 
 import threading
 import socket
 
-host = input('IP : ')
-port = 55555
+port = int(input("Port : "))
 
 server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-server.bind((host, port))
+server.bind(('', port))
 server.listen()
 
 clients = []
 usernames = []
 
-def broadcast(message):
+def broadcast(message, sender):
+    author = sender.getpeername()[0]
     for client in clients:
-        client.send(message)
+        clientAdress = client.getpeername()[0]
+        if author != clientAdress:
+            client.send(message)
 
 
 def handle(client):
@@ -28,7 +24,7 @@ def handle(client):
         try:
             message = client.recv(1024)
             print(message.decode('utf-8'))
-            broadcast(message)
+            broadcast(message, client)
 
         except:
             index = clients.index(client)
@@ -36,7 +32,7 @@ def handle(client):
             client.close()
             username = usernames[index]
             print(f'{username} left the chat')
-            broadcast(f"{username} left the chat".encode('utf-8'))
+            broadcast(f"{username} left the chat".encode('utf-8'), client)
             usernames.remove(username)
             break
 
@@ -51,7 +47,7 @@ def receive():
         clients.append(client)
 
         print(f'{username} joined the chat')
-        broadcast(f'{username} joined the chat'.encode('utf-8'))
+        broadcast(f'{username} joined the chat'.encode('utf-8'), client)
         client.send('Connected'.encode('utf-8'))
 
         thread = threading.Thread(target = handle, args = (client,))
